@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="MyBanque - Votre plateforme de gestion bancaire en ligne sécurisée" />
+    <meta name="theme-color" content="#4CAF50" />
+    
+    <!-- SEO -->
+    <meta name="keywords" content="banque, gestion financière, compte bancaire, transactions" />
+    <meta name="author" content="MyBanque" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MyBanque - Gestion Bancaire" />
+    <meta property="og:description" content="Votre plateforme de gestion bancaire en ligne" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MyBanque" />
+    
+    <!-- Favicon inline (emoji comme icône temporaire) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>" />
+    
+    <!-- Preconnect pour optimiser les performances -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Fonts (optionnel) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <title>MyBanque - Gestion Bancaire</title>
+    
+    <style>
+      /* Reset & Base */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Loading Screen */
+      #root {
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .loader {
+        text-align: center;
+        color: white;
+      }
+
+      .loader-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .loader-text {
+        font-size: 18px;
+        font-weight: 500;
+        opacity: 0.9;
+      }
+
+      /* Noscript Warning */
+      noscript {
+        display: block;
+        text-align: center;
+        padding: 40px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      noscript h1 {
+        color: #e74c3c;
+        margin-bottom: 15px;
+        font-size: 24px;
+      }
+
+      noscript p {
+        color: #555;
+        line-height: 1.6;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Message pour navigateurs sans JavaScript -->
+    <noscript>
+      <h1>⚠️ JavaScript Requis</h1>
+      <p>
+        MyBanque nécessite JavaScript pour fonctionner.<br />
+        Veuillez activer JavaScript dans votre navigateur.
+      </p>
+    </noscript>
+
+    <!-- Point de montage React -->
+    <div id="root">
+      <!-- Loading screen affiché avant le chargement de React -->
+      <div class="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Chargement de MyBanque...</div>
+      </div>
+    </div>
+
+    <!-- Script principal React -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
