@@ -1,30 +1,19 @@
-// src/context/AuthContext.jsx
-import { createContext, useContext, useState } from "react";
+import { createContext, useState } from "react";
+import { getToken, removeToken } from "../utils/token";
 
-export const AuthContext = createContext(); // ✅ export nommé
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [isAuth, setIsAuth] = useState(!!getToken());
 
-  const loginUser = (jwtToken, userData) => {
-    setToken(jwtToken);
-    setUser(userData);
-    localStorage.setItem("token", jwtToken);
-  };
-
-  const logoutUser = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem("token");
+  const logout = () => {
+    removeToken();
+    setIsAuth(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loginUser, logoutUser }}>
+    <AuthContext.Provider value={{ isAuth, setIsAuth, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
-
-// ✅ Hook personnalisé
-export const useAuth = () => useContext(AuthContext);

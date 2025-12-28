@@ -1,10 +1,19 @@
-export default function Statement() {
+import Navbar from "../components/Navbar";
+
+const Statement = ({ accountId }) => {
   const download = () => {
     window.open(
-      "http://localhost:5000/api/accounts/ACCOUNT_ID/statement/pdf",
+      `http://localhost:5000/api/accounts/${accountId}/statement/pdf`,
       "_blank"
     );
   };
 
-  return <button onClick={download}>Télécharger Relevé PDF</button>;
-}
+  return (
+    <>
+      <Navbar />
+      <button onClick={download}>Télécharger le relevé PDF</button>
+    </>
+  );
+};
+
+export default Statement;
