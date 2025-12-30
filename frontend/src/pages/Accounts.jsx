@@ -8,11 +8,14 @@ const Accounts = () => {
   const [accounts, setAccounts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [amount, setAmount] = useState("");
+  const [modalAmount, setModalAmount] = useState("");
+  const [modalError, setModalError] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     loadAccounts();
@@ -25,7 +28,7 @@ const Accounts = () => {
       const res = await accountApi.getAccounts();
       setAccounts(res.data);
     } catch (err) {
-      console.error("Erreur lors du chargement des comptes:", err);
+      console.error("Erreur chargement comptes:", err);
       setError("Impossible de charger vos comptes");
     } finally {
       setIsLoading(false);
@@ -35,11 +38,15 @@ const Accounts = () => {
   const createAccount = async () => {
     try {
       setIsCreating(true);
+      setError("");
+      setSuccess("");
       await accountApi.createAccount();
       await loadAccounts();
+      setSuccess("Compte créé avec succès ! 🎉");
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Erreur lors de la création du compte:", err);
-      setError("Impossible de créer un nouveau compte");
+      console.error("Erreur création compte:", err);
+      setError("Impossible de créer un compte");
     } finally {
       setIsCreating(false);
     }
@@ -47,33 +54,60 @@ const Accounts = () => {
 
   const handleDeposit = async (e) => {
     e.preventDefault();
-    if (!selectedAccount || !amount) return;
+    setModalError("");
+    
+    const amount = parseFloat(modalAmount);
+    if (!amount || amount <= 0) {
+      setModalError("Montant invalide");
+      return;
+    }
 
     try {
-      await accountApi.deposit(selectedAccount._id, parseFloat(amount));
+      setIsProcessing(true);
+      await accountApi.deposit(selectedAccount._id, amount);
       setShowDepositModal(false);
-      setAmount("");
+      setModalAmount("");
       setSelectedAccount(null);
       await loadAccounts();
+      setSuccess(`Dépôt de ${formatCurrency(amount)} effectué ! ✅`);
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Erreur lors du dépôt:", err);
-      setError("Impossible d'effectuer le dépôt");
+      console.error("Erreur dépôt:", err);
+      setModalError(err.response?.data?.message || "Erreur lors du dépôt");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleWithdraw = async (e) => {
     e.preventDefault();
-    if (!selectedAccount || !amount) return;
+    setModalError("");
+    
+    const amount = parseFloat(modalAmount);
+    if (!amount || amount <= 0) {
+      setModalError("Montant invalide");
+      return;
+    }
+
+    if (amount > selectedAccount.balance) {
+      setModalError("Solde insuffisant");
+      return;
+    }
 
     try {
-      await accountApi.withdraw(selectedAccount._id, parseFloat(amount));
+      setIsProcessing(true);
+      await accountApi.withdraw(selectedAccount._id, amount);
       setShowWithdrawModal(false);
-      setAmount("");
+      setModalAmount("");
       setSelectedAccount(null);
       await loadAccounts();
+      setSuccess(`Retrait de ${formatCurrency(amount)} effectué ! ✅`);
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      console.error("Erreur lors du retrait:", err);
-      setError("Impossible d'effectuer le retrait");
+      console.error("Erreur retrait:", err);
+      setModalError(err.response?.data?.message || "Erreur lors du retrait");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -85,146 +119,198 @@ const Accounts = () => {
     return accounts.reduce((sum, acc) => sum + acc.balance, 0);
   };
 
+  const openModal = (type, account) => {
+    setSelectedAccount(account);
+    setModalAmount("");
+    setModalError("");
+    if (type === "deposit") setShowDepositModal(true);
+    else setShowWithdrawModal(true);
+  };
+
+  const closeModals = () => {
+    setShowDepositModal(false);
+    setShowWithdrawModal(false);
+    setSelectedAccount(null);
+    setModalAmount("");
+    setModalError("");
+  };
+
   return (
     <>
       <Navbar />
-      <div className="accounts-container">
-        <div className="container">
-          {/* En-tête */}
-          <div className="accounts-header">
-            <div>
-              <h1 className="accounts-title">Mes Comptes</h1>
-              <p className="accounts-subtitle">
-                Gérez vos comptes bancaires
-              </p>
-            </div>
-            <button
-              className="btn btn-primary"
-              onClick={createAccount}
-              disabled={isCreating}
-            >
-              {isCreating ? (
-                <>
-                  <span className="spinner spinner-sm"></span>
-                  Création...
-                </>
-              ) : (
-                <>+ Créer un compte</>
-              )}
-            </button>
-          </div>
+      <div className="accounts-page">
+        <div className="accounts-background">
+          <div className="bg-shape shape-1"></div>
+          <div className="bg-shape shape-2"></div>
+        </div>
 
+        <div className="container accounts-container">
+          {/* Header */}
+          <header className="accounts-header">
+            <div className="header-content">
+              <div>
+                <h1 className="accounts-title">
+                  Mes Comptes <span className="title-icon">💳</span>
+                </h1>
+                <p className="accounts-subtitle">
+                  Gérez vos comptes bancaires en toute simplicité
+                </p>
+              </div>
+              <button
+                className="btn btn-primary btn-create"
+                onClick={createAccount}
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <>
+                    <span className="spinner-sm"></span>
+                    <span>Création...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Nouveau compte</span>
+                    <span className="btn-icon">+</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </header>
+
+          {/* Alerts */}
           {error && (
-            <div className="alert alert-error mb-lg">
-              <span>⚠️</span>
+            <div className="alert alert-error animate-slide-down">
+              <span className="alert-icon">⚠️</span>
               <span>{error}</span>
+              <button onClick={() => setError("")} className="alert-close">✕</button>
+            </div>
+          )}
+
+          {success && (
+            <div className="alert alert-success animate-slide-down">
+              <span className="alert-icon">✓</span>
+              <span>{success}</span>
             </div>
           )}
 
           {isLoading ? (
-            <div className="accounts-loading">
-              <div className="spinner"></div>
-              <p>Chargement de vos comptes...</p>
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p className="loading-text">Chargement de vos comptes...</p>
             </div>
           ) : accounts.length === 0 ? (
-            <div className="card text-center empty-state">
-              <div className="empty-state-icon">🏦</div>
-              <h3>Aucun compte disponible</h3>
-              <p className="text-secondary mb-lg">
-                Créez votre premier compte pour commencer
+            <div className="empty-state-card">
+              <div className="empty-icon">🏦</div>
+              <h2 className="empty-title">Aucun compte bancaire</h2>
+              <p className="empty-text">
+                Créez votre premier compte pour commencer à gérer vos finances
               </p>
-              <button className="btn btn-primary" onClick={createAccount}>
-                Créer mon premier compte
+              <button className="btn btn-primary btn-lg" onClick={createAccount}>
+                <span>Créer mon premier compte</span>
+                <span className="btn-icon">→</span>
               </button>
             </div>
           ) : (
             <>
-              {/* Résumé */}
-              <div className="card summary-card">
+              {/* Summary Card */}
+              <div className="summary-banner">
                 <div className="summary-content">
-                  <div className="summary-icon">💰</div>
-                  <div>
-                    <p className="summary-label">Solde total</p>
-                    <h2 className="summary-value">{formatCurrency(getTotalBalance())}</h2>
+                  <div className="summary-icon-wrapper">
+                    <span className="summary-icon">💰</span>
+                  </div>
+                  <div className="summary-details">
+                    <p className="summary-label">Patrimoine total</p>
+                    <h2 className="summary-amount">{formatCurrency(getTotalBalance())}</h2>
+                    <p className="summary-info">
+                      Réparti sur {accounts.length} compte{accounts.length > 1 ? 's' : ''}
+                    </p>
                   </div>
                 </div>
-                <div className="summary-info">
-                  <span className="badge badge-primary">
-                    {accounts.length} compte{accounts.length > 1 ? 's' : ''}
-                  </span>
+                <div className="summary-badge">
+                  <div className="badge badge-success">
+                    <span className="badge-icon">✓</span>
+                    <span>Tous vos comptes sont actifs</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Liste des comptes */}
-              <div className="accounts-grid">
-                {accounts.map((account) => (
-                  <div key={account._id} className="account-card">
-                    <div className="account-card-header">
-                      <div className="account-card-icon">🏦</div>
-                      <div className="account-card-info">
-                        <h3 className="account-card-number">
-                          {account.accountNumber}
-                        </h3>
-                        <p className="account-card-type">Compte bancaire</p>
+              {/* Accounts Grid */}
+              <section className="accounts-section">
+                <div className="section-header">
+                  <h2 className="section-title">Vos comptes</h2>
+                  <p className="section-count">{accounts.length} compte{accounts.length > 1 ? 's' : ''}</p>
+                </div>
+                <div className="accounts-grid">
+                  {accounts.map((account, index) => (
+                    <article key={account._id} className="account-card" style={{ animationDelay: `${index * 0.1}s` }}>
+                      <div className="account-header">
+                        <div className="account-type-badge">
+                          <span className="badge-icon">🏦</span>
+                          <span>Compte courant</span>
+                        </div>
+                        <div className="account-menu">⋮</div>
                       </div>
-                    </div>
 
-                    <div className="account-card-balance">
-                      <p className="balance-label">Solde disponible</p>
-                      <h2 className="balance-value">
-                        {formatCurrency(account.balance)}
-                      </h2>
-                    </div>
+                      <div className="account-body">
+                        <p className="account-label">Numéro de compte</p>
+                        <h3 className="account-number">{account.accountNumber}</h3>
+                        
+                        <div className="balance-section">
+                          <p className="balance-label">Solde disponible</p>
+                          <h2 className="balance-amount">{formatCurrency(account.balance)}</h2>
+                        </div>
+                      </div>
 
-                    <div className="account-card-actions">
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => {
-                          setSelectedAccount(account);
-                          setShowDepositModal(true);
-                        }}
-                      >
-                        💵 Dépôt
-                      </button>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => {
-                          setSelectedAccount(account);
-                          setShowWithdrawModal(true);
-                        }}
-                      >
-                        💸 Retrait
-                      </button>
-                      <Link
-                        to={`/statement/${account._id}`}
-                        className="btn btn-secondary btn-sm"
-                      >
-                        📄 Relevé
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      <div className="account-actions">
+                        <button
+                          className="action-btn action-deposit"
+                          onClick={() => openModal("deposit", account)}
+                        >
+                          <span className="action-icon">💵</span>
+                          <span>Dépôt</span>
+                        </button>
+                        <button
+                          className="action-btn action-withdraw"
+                          onClick={() => openModal("withdraw", account)}
+                        >
+                          <span className="action-icon">💸</span>
+                          <span>Retrait</span>
+                        </button>
+                        <Link
+                          to={`/statement/${account._id}`}
+                          className="action-btn action-statement"
+                        >
+                          <span className="action-icon">📄</span>
+                          <span>Relevé</span>
+                        </Link>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
             </>
           )}
         </div>
       </div>
 
-      {/* Modal Dépôt */}
+      {/* Deposit Modal */}
       {showDepositModal && (
-        <div className="modal-overlay" onClick={() => setShowDepositModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay active" onClick={closeModals}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Effectuer un dépôt</h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowDepositModal(false)}
-              >
-                ✕
-              </button>
+              <div className="modal-icon deposit-icon">💵</div>
+              <h3 className="modal-title">Effectuer un dépôt</h3>
+              <button className="modal-close" onClick={closeModals}>✕</button>
             </div>
-            <form onSubmit={handleDeposit}>
-              <div className="form-group">
+
+            {modalError && (
+              <div className="modal-alert alert-error">
+                <span>⚠️</span>
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleDeposit} className="modal-form">
+              <div className="form-field">
                 <label className="form-label">Compte</label>
                 <input
                   type="text"
@@ -233,28 +319,29 @@ const Accounts = () => {
                   disabled
                 />
               </div>
-              <div className="form-group">
+
+              <div className="form-field">
                 <label className="form-label">Montant (FCFA)</label>
                 <input
                   type="number"
-                  className="form-input"
-                  placeholder="Entrez le montant"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  className="form-input input-amount"
+                  placeholder="Ex: 50000"
+                  value={modalAmount}
+                  onChange={(e) => setModalAmount(e.target.value)}
                   min="1"
+                  step="1"
                   required
+                  autoFocus
                 />
+                <p className="form-help">Montant minimum : 1 FCFA</p>
               </div>
+
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowDepositModal(false)}
-                >
+                <button type="button" className="btn btn-outline" onClick={closeModals}>
                   Annuler
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Déposer
+                <button type="submit" className="btn btn-primary" disabled={isProcessing}>
+                  {isProcessing ? "Traitement..." : "Confirmer le dépôt"}
                 </button>
               </div>
             </form>
@@ -262,21 +349,25 @@ const Accounts = () => {
         </div>
       )}
 
-      {/* Modal Retrait */}
+      {/* Withdraw Modal */}
       {showWithdrawModal && (
-        <div className="modal-overlay" onClick={() => setShowWithdrawModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay active" onClick={closeModals}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Effectuer un retrait</h3>
-              <button
-                className="modal-close"
-                onClick={() => setShowWithdrawModal(false)}
-              >
-                ✕
-              </button>
+              <div className="modal-icon withdraw-icon">💸</div>
+              <h3 className="modal-title">Effectuer un retrait</h3>
+              <button className="modal-close" onClick={closeModals}>✕</button>
             </div>
-            <form onSubmit={handleWithdraw}>
-              <div className="form-group">
+
+            {modalError && (
+              <div className="modal-alert alert-error">
+                <span>⚠️</span>
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleWithdraw} className="modal-form">
+              <div className="form-field">
                 <label className="form-label">Compte</label>
                 <input
                   type="text"
@@ -285,32 +376,32 @@ const Accounts = () => {
                   disabled
                 />
               </div>
-              <div className="form-group">
+
+              <div className="form-field">
                 <label className="form-label">Montant (FCFA)</label>
                 <input
                   type="number"
-                  className="form-input"
-                  placeholder="Entrez le montant"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  className="form-input input-amount"
+                  placeholder="Ex: 25000"
+                  value={modalAmount}
+                  onChange={(e) => setModalAmount(e.target.value)}
                   min="1"
                   max={selectedAccount?.balance}
+                  step="1"
                   required
+                  autoFocus
                 />
                 <p className="form-help">
-                  Solde disponible: {formatCurrency(selectedAccount?.balance || 0)}
+                  Solde disponible : <strong>{formatCurrency(selectedAccount?.balance || 0)}</strong>
                 </p>
               </div>
+
               <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowWithdrawModal(false)}
-                >
+                <button type="button" className="btn btn-outline" onClick={closeModals}>
                   Annuler
                 </button>
-                <button type="submit" className="btn btn-danger">
-                  Retirer
+                <button type="submit" className="btn btn-danger" disabled={isProcessing}>
+                  {isProcessing ? "Traitement..." : "Confirmer le retrait"}
                 </button>
               </div>
             </form>
