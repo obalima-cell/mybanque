@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+
 import accountApi from "../api/account.api";
 import "./Accounts.css";
 
@@ -137,7 +137,7 @@ const Accounts = () => {
 
   return (
     <>
-      <Navbar />
+ 
       <div className="accounts-page">
         <div className="accounts-background">
           <div className="bg-shape shape-1"></div>

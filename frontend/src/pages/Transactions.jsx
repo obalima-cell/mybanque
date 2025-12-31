@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+
 import accountApi from "../api/account.api";
 import "./Transactions.css";
 
@@ -119,7 +119,7 @@ const Transactions = () => {
 
   return (
     <>
-      <Navbar />
+      
       <div className="transactions-page">
         <div className="transactions-background">
           <div className="bg-shape shape-1"></div>

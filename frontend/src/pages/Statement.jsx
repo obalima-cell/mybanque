@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+
 import accountApi from "../api/account.api";
 import "./Statement.css";
 
@@ -107,7 +107,7 @@ const Statement = () => {
 
   return (
     <>
-      <Navbar />
+    
       <div className="statement-page">
         <div className="statement-background">
           <div className="bg-shape shape-1"></div>

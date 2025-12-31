@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../components/Navbar";
+
 import accountApi from "../api/account.api";
 import { useAuth } from "../hooks/useAuth";
 import "./Dashboard.css";
@@ -142,7 +142,7 @@ const Dashboard = () => {
 
   return (
     <>
-      <Navbar />
+ 
       <div className="dashboard-page">
         <div className="dashboard-background">
           <div className="bg-shape shape-1"></div>
@@ -385,7 +385,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="account-card-footer">
-                          <Link to={`/accounts/${account._id}`} className="account-link">
+                             <Link to={`/manage-account/${account._id}`} className="account-link">
                             Gérer ce compte
                           </Link>
                         </div>
